@@ -12,7 +12,7 @@ namespace Coffi.MobileOptimizer
             var body = FindBody(ctx);
             if (body == null)
             {
-                ctx.Report.Warn("素体メッシュが見つからないため、隠れポリゴン削除をスキップしました");
+                ctx.Report.Warn($"素体メッシュ '{ctx.Settings.bodyRendererPath}' が見つからないため、隠れポリゴン削除をスキップしました (非表示扱いで削除された可能性があります)");
                 return;
             }
             var removed = ComputeRemovedTriangles(ctx, body);

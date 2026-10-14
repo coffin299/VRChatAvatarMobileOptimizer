@@ -42,7 +42,7 @@ namespace Coffi.MobileOptimizer
             foreach (var r in ctx.Root.GetComponentsInChildren<Renderer>(true))
             {
                 if (!(r is SkinnedMeshRenderer) && !(r is MeshRenderer)) continue;
-                bool visible = r.gameObject.activeInHierarchy && r.enabled;
+                bool visible = PathUtil.IsActiveUnder(r.transform, root) && r.enabled;
                 bool toggleable = ctx.Anim.IsToggled(r.transform, root);
                 var path = PathUtil.GetPath(r.transform, root);
 

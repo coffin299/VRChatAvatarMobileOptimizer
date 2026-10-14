@@ -280,7 +280,7 @@ namespace Coffi.MobileOptimizer
             int separate = 0;
             foreach (var r in renderers)
             {
-                bool visible = r.gameObject.activeInHierarchy && r.enabled;
+                bool visible = PathUtil.IsActiveUnder(r.transform, root) && r.enabled;
                 bool toggle = anim.IsToggled(r.transform, root);
                 if (!visible && !toggle) continue;
                 if (toggle && s.toggleMode == ToggleMode.Delete) continue;
