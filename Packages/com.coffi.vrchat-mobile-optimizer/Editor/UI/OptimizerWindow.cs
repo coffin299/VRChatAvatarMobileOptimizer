@@ -38,10 +38,10 @@ namespace Coffi.MobileOptimizer
         private static readonly string[] RankLabels = { "Good", "Medium", "Poor" };
         private static readonly PerfRank[] RankValues = { PerfRank.Good, PerfRank.Medium, PerfRank.Poor };
 
-        [MenuItem("Tools/Mobile Optimizer")]
+        [MenuItem("BAKAtool/AvatarBruteOptimizer")]
         public static void Open()
         {
-            var window = GetWindow<OptimizerWindow>("Mobile Optimizer");
+            var window = GetWindow<OptimizerWindow>("AvatarBruteOptimizer");
             var selected = Selection.activeGameObject != null ? Selection.activeGameObject.GetComponentInParent<VRCAvatarDescriptor>() : null;
             if (selected != null) window.SetAvatar(selected);
         }
@@ -99,7 +99,7 @@ namespace Coffi.MobileOptimizer
         private void OnGUI()
         {
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
-            EditorGUILayout.LabelField("VRChat Avatar Mobile Optimizer", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("AvatarBruteOptimizer", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox("元アバターを複製して Mobile 向けに軽量化します。元のアバター・アセットは変更しません。", MessageType.None);
 
             EditorGUI.BeginChangeCheck();

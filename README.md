@@ -22,7 +22,7 @@ VRChat アバターを複製して、Mobile (Android / iOS / Quest) 向けに半
 ## 使い方
 
 1. `Packages/com.coffi.vrchat-mobile-optimizer` をプロジェクトの `Packages/` に置く (または unitypackage をインポート)
-2. メニュー `Tools > Mobile Optimizer` を開く
+2. メニュー `BAKAtool > AvatarBruteOptimizer` を開く
 3. アバターを指定し、PhysBone の「残す / 削除」や目標ランクを確認
 4. 「Mobile 版を生成」を押す
 
