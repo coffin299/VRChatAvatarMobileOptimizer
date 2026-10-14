@@ -15,22 +15,20 @@ namespace Coffi.MobileOptimizer
         private readonly Dictionary<Object, Object> _map = new Dictionary<Object, Object>();
         private readonly List<Object> _created = new List<Object>();
         private readonly Dictionary<Object, Object> _owner = new Dictionary<Object, Object>();
-        private Object _currentOwner;
+        private readonly Queue<Object> _pending = new Queue<Object>();
 
         public IEnumerable<AnimationClip> ClonedClips => _created.OfType<AnimationClip>();
 
         public RuntimeAnimatorController CloneController(RuntimeAnimatorController controller)
         {
             if (controller == null) return null;
-            if (_map.TryGetValue(controller, out var existing)) return (RuntimeAnimatorController)existing;
-            var previousOwner = _currentOwner;
-            _currentOwner = null;
-            var clone = (RuntimeAnimatorController)CloneObject(controller);
-            _currentOwner = previousOwner;
+            var clone = (RuntimeAnimatorController)CloneObject(controller, null);
+            while (_pending.Count > 0) RewriteReferences(_pending.Dequeue());
             return clone;
         }
 
-        private Object CloneObject(Object obj)
+        // Large FX layers form deep state/transition graphs, so cloning must not recurse.
+        private Object CloneObject(Object obj, Object owner)
         {
             if (obj == null) return null;
             if (_map.TryGetValue(obj, out var existing)) return existing;
@@ -39,12 +37,16 @@ namespace Coffi.MobileOptimizer
             var clone = Object.Instantiate(obj);
             clone.name = obj.name;
             _map[obj] = clone;
+            _map[clone] = clone;
             _created.Add(clone);
+            _owner[clone] = clone is RuntimeAnimatorController ? clone : owner;
+            _pending.Enqueue(clone);
+            return clone;
+        }
 
-            bool isController = clone is RuntimeAnimatorController;
-            if (isController && _currentOwner == null) _currentOwner = clone;
-            if (!isController) _owner[clone] = _currentOwner;
-
+        private void RewriteReferences(Object clone)
+        {
+            _owner.TryGetValue(clone, out var owner);
             var so = new SerializedObject(clone);
             var it = so.GetIterator();
             bool enter = true;
@@ -53,10 +55,11 @@ namespace Coffi.MobileOptimizer
                 enter = it.hasChildren && it.propertyType != SerializedPropertyType.String;
                 if (it.propertyType != SerializedPropertyType.ObjectReference) continue;
                 var r = it.objectReferenceValue;
-                if (r != null && IsCloneTarget(r)) it.objectReferenceValue = CloneObject(r);
+                if (r == null || !IsCloneTarget(r)) continue;
+                var replaced = CloneObject(r, owner);
+                if (replaced != r) it.objectReferenceValue = replaced;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
-            return clone;
         }
 
         private static bool IsCloneTarget(Object o)

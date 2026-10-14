@@ -136,13 +136,11 @@ namespace Coffi.MobileOptimizer
             DrawRankTable();
 
             EditorGUILayout.Space();
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("ランクを再計算", GUILayout.Height(24))) RefreshAvatarInfo();
-                GUI.backgroundColor = new Color(0.5f, 0.9f, 0.6f);
-                if (GUILayout.Button("Mobile 版を生成", GUILayout.Height(32))) RunOptimizer();
-                GUI.backgroundColor = Color.white;
-            }
+            if (GUILayout.Button("ランクを再計算", GUILayout.Height(22))) RefreshAvatarInfo();
+            EditorGUILayout.Space(4);
+            GUI.backgroundColor = new Color(0.5f, 0.9f, 0.6f);
+            if (GUILayout.Button("Mobile 版を生成", GUILayout.Height(36))) RunOptimizer();
+            GUI.backgroundColor = Color.white;
 
             if (_result != null)
             {
