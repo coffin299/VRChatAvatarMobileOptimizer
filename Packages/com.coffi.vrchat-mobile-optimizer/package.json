@@ -1,0 +1,25 @@
+{
+  "name": "com.coffi.vrchat-mobile-optimizer",
+  "displayName": "VRChat Avatar Mobile Optimizer",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "元アバターを複製し、Mobile (Android / iOS / Quest) 向けに半自動で軽量化するエディタ拡張。Physbone 削減・隠れメッシュ削除・ボーン統合・メッシュ/マテリアル統合・テクスチャアトラス化・Mobile 予想ランク表示。",
+  "author": {
+    "name": "coffi"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "vrchat",
+    "avatar",
+    "quest",
+    "mobile",
+    "optimizer"
+  ],
+  "vpmDependencies": {
+    "com.vrchat.avatars": ">=3.7.0",
+    "nadena.dev.ndmf": ">=1.5.0",
+    "nadena.dev.modular-avatar": ">=1.10.0"
+  },
+  "legacyFolders": {},
+  "legacyFiles": {}
+}
