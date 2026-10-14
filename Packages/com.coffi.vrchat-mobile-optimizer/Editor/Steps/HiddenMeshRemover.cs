@@ -16,7 +16,11 @@ namespace Coffi.MobileOptimizer
                 return;
             }
             var removed = ComputeRemovedTriangles(ctx, body);
-            if (removed == null) return;
+            if (removed == null)
+            {
+                ctx.Report.Warn("服メッシュが見つからないため、隠れポリゴン削除をスキップしました");
+                return;
+            }
 
             int count = 0;
             var data = body.Data;
@@ -50,11 +54,22 @@ namespace Coffi.MobileOptimizer
             return named ?? ctx.Units.OrderByDescending(u => u.Data.VertexCount).FirstOrDefault();
         }
 
+        /// <summary>
+        /// 素体を隠す服。指定があればそれだけ (トグル対象でも使う)、なければ素体以外で常に表示されるメッシュすべて。
+        /// </summary>
+        public static List<MeshUnit> GetOccluders(OptimizerContext ctx, MeshUnit body)
+        {
+            var paths = ctx.Settings.clothingRendererPaths.Where(p => !string.IsNullOrEmpty(p)).ToList();
+            if (paths.Count > 0)
+                return ctx.Units.Where(u => u != body && u.SourcePaths.Any(paths.Contains)).ToList();
+            return ctx.Units.Where(u => u != body && !u.KeepSeparate).ToList();
+        }
+
         /// <summary>サブメッシュごとに、削除する三角形のフラグを返す。</summary>
         public static List<bool[]> ComputeRemovedTriangles(OptimizerContext ctx, MeshUnit body)
         {
             var s = ctx.Settings;
-            var occluders = ctx.Units.Where(u => u != body && !u.KeepSeparate).ToList();
+            var occluders = GetOccluders(ctx, body);
             if (occluders.Count == 0) return null;
 
             float scale = Mathf.Max(1e-5f, Mathf.Abs(ctx.RootTransform.lossyScale.x));

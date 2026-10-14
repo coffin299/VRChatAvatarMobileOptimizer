@@ -24,7 +24,7 @@ namespace Coffi.MobileOptimizer
         private string[] _rendererPaths = new string[0];
         private string _previewInfo;
 
-        private bool _foldSteps = true, _foldPhysBone = true, _foldHidden, _foldMesh, _foldAtlas, _foldDecimate, _foldSdk;
+        private bool _foldSteps = true, _foldPhysBone = true, _foldHidden, _foldMesh, _foldAtlas, _foldDecimate, _foldSdk, _foldClothing = true;
 
         private class PhysBoneEntry
         {
@@ -233,6 +233,7 @@ namespace Coffi.MobileOptimizer
                     int index = Mathf.Max(0, Array.IndexOf(_rendererPaths, bodyProp.stringValue));
                     int next = EditorGUILayout.Popup("素体メッシュ", index, _rendererPaths);
                     if (next != index) bodyProp.stringValue = next == 0 ? "" : _rendererPaths[next];
+                    DrawClothingList(bodyProp.stringValue);
                     Prop("hiddenDistance", "判定距離 (m)", "素体の頂点からこの距離以内に服があれば隠れているとみなします");
                     Prop("hiddenRayAngle", "レイの広がり (度)", "法線から傾けた 4 方向にもレイを飛ばし、すべて服に当たった場合のみ削除します");
                     Prop("hiddenProtectedBones", "保護するボーン", "このボーン (と子) にウェイトがある頂点は削除しません");
@@ -245,6 +246,50 @@ namespace Coffi.MobileOptimizer
                     }
                     if (_previewInfo != null) EditorGUILayout.HelpBox(_previewInfo, MessageType.Info);
                 }
+            }
+        }
+
+        private void DrawClothingList(string bodyPath)
+        {
+            var list = _so.FindProperty("clothingRendererPaths");
+            var selected = new HashSet<string>();
+            for (int i = 0; i < list.arraySize; i++) selected.Add(list.GetArrayElementAtIndex(i).stringValue);
+
+            _foldClothing = EditorGUILayout.Foldout(_foldClothing,
+                new GUIContent($"服メッシュ ({(selected.Count == 0 ? "自動: 素体以外すべて" : selected.Count + " 個")})",
+                    "素体を隠す服を指定します。トグルで脱げる服を指定すると、脱いだときに素体に穴が見えます"), true);
+            if (!_foldClothing) return;
+
+            using (new EditorGUI.IndentLevelScope())
+            {
+                bool changed = false;
+                foreach (var path in _rendererPaths.Skip(1))
+                {
+                    if (path == bodyPath) continue;
+                    bool on = selected.Contains(path);
+                    bool next = EditorGUILayout.ToggleLeft(new GUIContent(path, path), on);
+                    if (next == on) continue;
+                    if (next) selected.Add(path);
+                    else selected.Remove(path);
+                    changed = true;
+                }
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("すべて選択"))
+                    {
+                        selected = new HashSet<string>(_rendererPaths.Skip(1).Where(p => p != bodyPath));
+                        changed = true;
+                    }
+                    if (GUILayout.Button("自動に戻す"))
+                    {
+                        selected.Clear();
+                        changed = true;
+                    }
+                }
+                if (!changed) return;
+                var ordered = selected.OrderBy(p => p).ToList();
+                list.arraySize = ordered.Count;
+                for (int i = 0; i < ordered.Count; i++) list.GetArrayElementAtIndex(i).stringValue = ordered[i];
             }
         }
 
@@ -428,15 +473,9 @@ namespace Coffi.MobileOptimizer
         private void RunPreview()
         {
             AssetDatabase.SaveAssets();
-            var mesh = OptimizerPipeline.PreviewHidden(_avatar.gameObject, _settings, out int count, out string body);
-            if (mesh == null)
-            {
-                _previewInfo = "削除対象の面がありません (素体または服が見つかりません)";
-                HiddenMeshPreview.Clear();
-                return;
-            }
-            HiddenMeshPreview.Show(mesh);
-            _previewInfo = $"素体 '{body}' の {count} ポリゴンを削除予定です (赤く表示)";
+            HiddenMeshPreview.Clear();
+            var mesh = OptimizerPipeline.PreviewHidden(_avatar.gameObject, _settings, out _previewInfo);
+            if (mesh != null) HiddenMeshPreview.Show(mesh);
         }
 
         private void RunOptimizer()

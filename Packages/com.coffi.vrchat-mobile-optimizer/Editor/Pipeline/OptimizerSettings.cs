@@ -58,6 +58,8 @@ namespace Coffi.MobileOptimizer
 
         [Header("Hidden Mesh")]
         public string bodyRendererPath = "";
+        /// <summary>素体を隠す服のレンダラーパス。空なら素体以外のすべてのメッシュを服として扱う。</summary>
+        public List<string> clothingRendererPaths = new List<string>();
         public float hiddenDistance = 0.03f;
         public float hiddenRayAngle = 25f;
         public List<HumanBodyBones> hiddenProtectedBones = new List<HumanBodyBones> { HumanBodyBones.Head };

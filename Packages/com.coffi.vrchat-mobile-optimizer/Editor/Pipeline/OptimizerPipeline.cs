@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -117,10 +118,8 @@ namespace Coffi.MobileOptimizer
         }
 
         /// <summary>隠れポリゴンのプレビュー。一時的な複製で判定し、削除予定の面をワールド空間のメッシュとして返す。</summary>
-        public static Mesh PreviewHidden(GameObject original, OptimizerSettings s, out int count, out string bodyName)
+        public static Mesh PreviewHidden(GameObject original, OptimizerSettings s, out string message)
         {
-            count = 0;
-            bodyName = null;
             GameObject clone = null;
             try
             {
@@ -131,10 +130,29 @@ namespace Coffi.MobileOptimizer
                 Prepare(ctx);
                 ctx.Units = MeshUnitBuilder.Build(ctx);
                 var body = HiddenMeshRemover.FindBody(ctx);
-                if (body == null) return null;
-                bodyName = body.SourcePaths[0];
+                if (body == null)
+                {
+                    message = "素体メッシュが見つかりません。「素体メッシュ」を指定してください";
+                    return null;
+                }
+                var occluders = HiddenMeshRemover.GetOccluders(ctx, body);
+                if (occluders.Count == 0)
+                {
+                    message = s.clothingRendererPaths.Count > 0
+                        ? "指定した服メッシュが見つかりません (非表示のため削除された可能性があります)"
+                        : "服メッシュが見つかりません。「服メッシュ」を指定してください";
+                    return null;
+                }
                 var removed = HiddenMeshRemover.ComputeRemovedTriangles(ctx, body);
-                return removed == null ? null : HiddenMeshRemover.BuildPreviewMesh(ctx, body, removed, out count);
+                var mesh = HiddenMeshRemover.BuildPreviewMesh(ctx, body, removed, out int count);
+                var names = string.Join(", ", occluders.Select(u => u.Name));
+                message = $"素体: {body.SourcePaths[0]}\n服 ({occluders.Count}): {names}\n削除予定: {count} ポリゴン (赤く表示)";
+                if (count == 0)
+                {
+                    Object.DestroyImmediate(mesh);
+                    return null;
+                }
+                return mesh;
             }
             finally
             {
